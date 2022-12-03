@@ -1,11 +1,17 @@
 # Based on https://github.com/actions/starter-workflows/blob/main/ci/node.js.yml
 name: CI
+
 on:
   pull_request:
     branches:
       - main
       - develop
       - testing
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+  
 jobs:
   ci:
     runs-on: ubuntu-latest
