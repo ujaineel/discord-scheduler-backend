@@ -1,4 +1,4 @@
-// https://github.com/barecheck/code-coverage-action
+# https://github.com/barecheck/code-coverage-action
 name: Code Coverage
 
 on: [pull_request]
