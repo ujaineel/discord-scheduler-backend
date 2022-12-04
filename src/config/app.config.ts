@@ -7,6 +7,6 @@ export default registerAs('app', () =>
         PORT: 3535,
       }
     : {
-        PORT: process.env.APP_PORT,
+        PORT: parseInt(process.env.APP_PORT, 10),
       },
 );
