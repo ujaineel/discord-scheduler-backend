@@ -32,6 +32,9 @@
     "@nestjs/platform-express": "^9.0.0",
     "cross-env": "^7.0.3",
     "husky": "^8.0.2",
+    "nestjs-pino": "^3.1.1",
+    "pino-http": "^8.2.1",
+    "pino-pretty": "^9.1.1",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0"
