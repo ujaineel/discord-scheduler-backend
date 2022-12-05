@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { LoggerModule } from 'nestjs-pino';
 
 @Module({
   imports: [
@@ -13,6 +14,19 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
       isGlobal: true,
       envFilePath: `src/config/env/.env.${process.env.NODE_ENV}`,
       load: [appConfig, databaseConfig],
+    }),
+    LoggerModule.forRoot({
+      pinoHttp:
+        process.env.NODE_ENV === 'local'
+          ? {
+              transport: {
+                target: 'pino-pretty',
+                options: {
+                  singleLine: true,
+                },
+              },
+            }
+          : {},
     }),
     MikroOrmModule.forRootAsync({
       imports: [ConfigModule],
