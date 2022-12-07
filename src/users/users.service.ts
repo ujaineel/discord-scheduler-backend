@@ -1,5 +1,5 @@
 import { Logger, Injectable } from '@nestjs/common';
-import { Options } from 'src/shared/entities/user-entities';
+import { CreateUserDto, Options } from 'src/shared/entities/user-entities';
 
 export class User {
   id: string;
@@ -25,7 +25,7 @@ const users: User[] = [
     tasks: [],
   },
   {
-    id: '3',
+    id: '2',
     username: 'username-3',
     password: 'pass3',
     email: 'email3@gmail.com',
@@ -43,25 +43,63 @@ export class UsersService {
       return null;
     }
     this.logger.log({ options }, 'Fetching user based on properties provided.');
-    const user = users.find((user) => user.id === options.id);
+    const user = users.find(
+      (user) =>
+        user.id === options.id ||
+        user.username === options.username ||
+        user.email === options.email,
+    );
     if (user) {
       this.logger.log({ user }, 'User fetched');
       return user;
     }
 
-    this.logger.error('Did not find user');
+    this.logger.warn('Did not find user');
     return null;
   }
 
   findAll() {
     this.logger.log('Fetching all users.');
-    if (!users){
+    if (!users) {
       this.logger.log('No user to fetch');
     }
     return users;
   }
 
-  create() {}
+  create(createUserDto: CreateUserDto) {
+    const options: Options = {
+      username: createUserDto.username,
+      email: createUserDto.email,
+    };
+    this.logger.log('Checking if a user with similar credentials exists');
+
+    const user = this.findOne(options);
+    let sameValues = {};
+
+    // If an user with either same username or email exists.
+    if (user) {
+      this.logger.log('User with same credentials exists.');
+      if (user.email === options.email) {
+        this.logger.warn('User is already registered with this email');
+        sameValues = { email: true };
+      }
+
+      if (user.username === options.username) {
+        this.logger.warn('User already has this username');
+        sameValues = { username: true, ...sameValues };
+      }
+
+      return { userCreated: false, ...sameValues };
+    }
+
+    this.logger.log(
+      { email: createUserDto.email, username: createUserDto.username },
+      'User created',
+    );
+    users.push({ id: users.length.toString(), tasks: [], ...createUserDto });
+
+    return null;
+  }
 
   update() {}
 
