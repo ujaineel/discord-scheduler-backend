@@ -9,3 +9,12 @@ export interface CreateUserDto {
   password: string;
   email: string;
 }
+
+export interface UpdateUserDto {
+  id: string;
+  username?: string;
+  password?: string;
+  email?: string;
+  // To update in future.
+  tasks?: Array<unknown>;
+}
