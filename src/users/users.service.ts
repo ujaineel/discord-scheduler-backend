@@ -3,7 +3,7 @@ import {
   CreateUserDto,
   Options,
   UpdateUserDto,
-} from 'src/shared/entities/user-entities';
+} from '../shared/entities/user-entities';
 
 export class User {
   id: string;
@@ -41,7 +41,7 @@ const users: User[] = [
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
-  findOne(options: Options): User | null {
+  findOneUser(options: Options): User | null {
     if (!Object.keys(options).length) {
       this.logger.log('No option provided for finding user.');
       return null;
@@ -64,7 +64,7 @@ export class UsersService {
     return null;
   }
 
-  findAll() {
+  findAllUsers() {
     this.logger.log('Fetching all users.');
     if (!users) {
       this.logger.log('No user to fetch');
@@ -72,7 +72,7 @@ export class UsersService {
     return users;
   }
 
-  create(createUserDto: CreateUserDto) {
+  createUser(createUserDto: CreateUserDto) {
     const options: Options = {
       username: createUserDto.username,
       email: createUserDto.email,
@@ -81,7 +81,7 @@ export class UsersService {
       ...options,
     });
 
-    const user = this.findOne(options);
+    const user = this.findOneUser(options);
     let sameValues = {};
 
     // If an user with either same username or email exists.
@@ -109,7 +109,7 @@ export class UsersService {
     return users[users.length - 1];
   }
 
-  update(updateUserDto: UpdateUserDto) {
+  updateUser(updateUserDto: UpdateUserDto) {
     const options: Options = {
       id: updateUserDto.id,
       username: updateUserDto.username,
@@ -117,7 +117,7 @@ export class UsersService {
     };
     this.logger.log('Checking if a user with similar credentials exists');
 
-    const userFound = this.findOne(options);
+    const userFound = this.findOneUser(options);
 
     if (!userFound) {
       this.logger.log('Could not find user.', { ...options });
@@ -132,8 +132,8 @@ export class UsersService {
     return users[index];
   }
 
-  remove(id: string) {
-    const user = this.findOne({ id });
+  removeUser(id: string) {
+    const user = this.findOneUser({ id });
 
     if (!user) {
       this.logger.log('No user found to delete.');

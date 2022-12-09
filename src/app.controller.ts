@@ -26,7 +26,7 @@ export class AppController {
       password: 'pass1',
       email: 'user1@gmail.com',
     };
-    const user = this.usersService.create(userData);
+    const user = this.usersService.createUser(userData);
 
     this.logger.log('Created User.', { ...user });
 
@@ -38,12 +38,12 @@ export class AppController {
       email: 'updatedUser3@email.com',
     };
 
-    const updatedUser = this.usersService.update(updateUserDto);
+    const updatedUser = this.usersService.updateUser(updateUserDto);
     this.logger.log('Updated User', { ...updatedUser });
 
     this.logger.log('Remove User');
     const id = '1';
-    const removedUser = this.usersService.remove(id);
+    const removedUser = this.usersService.removeUser(id);
     this.logger.debug('Removed User', { removedUser });
 
     return 'meta';
