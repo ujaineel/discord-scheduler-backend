@@ -2,11 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
 import { User, UsersService } from './users.service';
 import { Options } from '../shared/entities/user-entities';
-import { ModuleRef } from '@nestjs/core';
+jest.mock;
 
 describe('UsersService', () => {
   let userService: UsersService;
-  const logger: Logger = new Logger(UsersService.name);
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -24,26 +23,84 @@ describe('UsersService', () => {
     expect(userService).toBeDefined();
   });
 
-  it('should call findOneUser with expected param and return user ', () => {
-    const findOneUserSpy = jest.spyOn(userService, 'findOneUser');
-    const logSpy = jest.spyOn(logger, 'log');
+  describe('findOneUser', () => {
+    let findOneUserSpy: jest.SpyInstance;
+    let logMock: jest.SpyInstance;
+    beforeEach(() => {
+      findOneUserSpy = jest.spyOn(userService, 'findOneUser');
+      logMock = jest.spyOn(Logger.prototype, 'log');
+    });
 
-    const user1: User = {
-      id: '1',
-      username: 'username-2',
-      password: 'pass2',
-      email: 'email2@gmail.com',
-      tasks: [],
-    };
+    afterEach(() => {
+      findOneUserSpy.mockClear();
+    });
 
-    const options: Options = { id: '1', username: 'username-2' };
-    const foundUser = userService.findOneUser(options);
+    it('should call findOneUser with expected param and return user ', () => {
+      const user1: User = {
+        id: '1',
+        username: 'username-2',
+        password: 'pass2',
+        email: 'email2@gmail.com',
+        tasks: [],
+      };
 
-    expect(findOneUserSpy).toHaveBeenCalledWith(options);
-    expect(logSpy).toHaveBeenCalledTimes(2);
+      const options: Options = { id: '1', username: 'username-2' };
+      const foundUser = userService.findOneUser(options);
 
-    expect(foundUser).toEqual(user1);
+      // Function Called (which is obvious but s till added)
+      expect(findOneUserSpy).toHaveBeenCalledWith(options);
 
-    // Logging
+      // Logging
+      expect(logMock).toBeCalledWith(
+        'Fetching user based on properties provided.',
+        { ...options },
+      );
+      expect(logMock).toBeCalledWith('User fetched', {
+        ...user1,
+      });
+
+      expect(logMock).toHaveBeenCalledTimes(2);
+
+      // Expected Output
+      expect(foundUser).toEqual(user1);
+    });
+
+    it('should return null if no search option provided', () => {
+      const options = new Options();
+      const userFound = userService.findOneUser(options);
+
+      // Again, Obvious
+      expect(findOneUserSpy).toHaveBeenCalledWith(options);
+
+      // Logging
+      expect(logMock).toHaveBeenCalledWith(
+        'No option provided for finding user.',
+      );
+
+      // TODO: Fix Log received, - "RootTestModule dependencies initialized".
+      // TODO: Fix test time. One test file taks almost 8 seconds.
+
+      // Expected Output
+      expect(userFound).toBeNull();
+    });
+
+    it("should return null if user isn't found", () => {
+      const options: Options = { id: '5' };
+      const userFound = userService.findOneUser(options);
+
+      // Again, Obvious
+      expect(findOneUserSpy).toHaveBeenCalledWith(options);
+
+      // Logging
+      expect(logMock).toHaveBeenCalledWith(
+        'Fetching user based on properties provided.',
+        { ...options },
+      );
+
+      expect(logMock).toHaveBeenCalledWith('Did not find user');
+
+      // Expected Output
+      expect(userFound).toBeNull();
+    });
   });
 });
