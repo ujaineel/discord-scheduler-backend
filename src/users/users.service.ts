@@ -1,9 +1,10 @@
 import { Logger, Injectable } from '@nestjs/common';
+import { isEmpty } from '../shared/helpers/user.helpers';
 import {
   CreateUserDto,
   Options,
   UpdateUserDto,
-} from '../shared/entities/user-entities';
+} from '../shared/entities/user.entities';
 
 export class User {
   id: string;
@@ -73,6 +74,12 @@ export class UsersService {
   }
 
   createUser(createUserDto: CreateUserDto) {
+    // TODO: Create helper function to check if all values are there.
+    if (isEmpty(createUserDto)) {
+      this.logger.log('Information lacking to create User');
+      return null;
+    }
+
     const options: Options = {
       username: createUserDto.username,
       email: createUserDto.email,
@@ -110,13 +117,19 @@ export class UsersService {
   }
 
   updateUser(updateUserDto: UpdateUserDto) {
-    const options: Options = {
-      id: updateUserDto.id,
-      username: updateUserDto.username,
-      email: updateUserDto.email,
-    };
-    this.logger.log('Checking if a user with similar credentials exists');
+    const { id, ...rest } = updateUserDto;
+    if (!updateUserDto.id || isEmpty(rest)) {
+      this.logger.log('Cannot update user - id missing or user info empty', {
+        id,
+      });
+      return null;
+    }
 
+    const options: Options = {
+      id,
+    };
+
+    this.logger.log('Checking if a user with similar credentials exists');
     const userFound = this.findOneUser(options);
 
     if (!userFound) {
@@ -127,8 +140,9 @@ export class UsersService {
     const index = users.findIndex((user) => user.id === userFound.id);
     users[index] = { ...updateUserDto, ...userFound };
 
+    // TODO: Remove password from log tags.
     this.logger.log('Updated user.', { ...updateUserDto });
-    console.log(users[index]);
+
     return users[index];
   }
 

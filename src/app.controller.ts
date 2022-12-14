@@ -1,6 +1,6 @@
 import { Controller, Get, Logger } from '@nestjs/common';
 import { AppService } from './app.service';
-import { CreateUserDto, UpdateUserDto } from './shared/entities/user-entities';
+import { CreateUserDto, UpdateUserDto } from './shared/entities/user.entities';
 import { UsersService } from './users/users.service';
 
 @Controller()
