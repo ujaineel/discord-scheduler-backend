@@ -17,6 +17,7 @@ export class AppController {
     return this.appService.getHello();
   }
 
+  /* istanbul ignore next */
   @Get('meta')
   meta(): string {
     this.logger.log('Create User');

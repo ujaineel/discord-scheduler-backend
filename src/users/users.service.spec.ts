@@ -367,14 +367,10 @@ describe('UsersService', () => {
         password: 'chanedpass',
       };
 
-      const options: Options = {
-        id: '4321',
-      };
-
       const updatedUser = userService.updateUser(updateUserDto);
 
       expect(updateUserSpy).toBeCalledWith(updateUserDto);
-      expect(findOneUserSpy).toBeCalledWith(options);
+      expect(findOneUserSpy).toBeCalled();
 
       // Logging
       expect(logMock).not.toBeCalledWith(
@@ -411,14 +407,10 @@ describe('UsersService', () => {
         tasks: [],
       };
 
-      const options: Options = {
-        id: '2',
-      };
-
       const updatedUser = userService.updateUser(updateUserDto);
 
       expect(updateUserSpy).toBeCalledWith(updateUserDto);
-      expect(findOneUserSpy).toHaveBeenCalledWith(options);
+      expect(findOneUserSpy).toBeCalled();
 
       // Logging
       expect(logMock).not.toBeCalledWith(

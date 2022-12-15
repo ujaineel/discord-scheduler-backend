@@ -11,7 +11,7 @@ export class User {
   username: string;
   password: string;
   email: string;
-  tasks: [];
+  tasks: unknown[];
 }
 
 const users: User[] = [
@@ -65,6 +65,7 @@ export class UsersService {
     return null;
   }
 
+  /* istanbul ignore next */
   findAllUsers() {
     this.logger.log('Fetching all users.');
     if (!users) {
@@ -138,8 +139,8 @@ export class UsersService {
     }
 
     const index = users.findIndex((user) => user.id === userFound.id);
-    users[index] = { ...updateUserDto, ...userFound };
-
+    const newUser: User = { ...userFound, ...updateUserDto };
+    users[index] = newUser;
     // TODO: Remove password from log tags.
     this.logger.log('Updated user.', { ...updateUserDto });
 
