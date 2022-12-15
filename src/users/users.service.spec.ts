@@ -6,8 +6,6 @@ import {
   Options,
   UpdateUserDto,
 } from '../shared/entities/user.entities';
-import e from 'express';
-jest.mock;
 
 describe('UsersService', () => {
   let userService: UsersService;
