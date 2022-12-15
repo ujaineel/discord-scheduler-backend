@@ -157,10 +157,11 @@ export class UsersService {
 
     const userIndex = users.findIndex((user) => user.id === id);
 
-    users.splice(userIndex, 1);
+    const deletedUserArray = users.splice(userIndex, 1);
+    const deletedUser = deletedUserArray[0];
 
-    this.logger.log('User delete.', { id });
+    this.logger.log('User deleted.', { id, username: deletedUser.username });
 
-    return id;
+    return deletedUser;
   }
 }

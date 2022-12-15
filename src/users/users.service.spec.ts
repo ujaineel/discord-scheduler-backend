@@ -435,4 +435,59 @@ describe('UsersService', () => {
       expect(updatedUser).toEqual(expectedUpdatedUser);
     });
   });
+
+  describe('removeUser', () => {
+    let findOneUserSpy: jest.SpyInstance;
+    let removeUserSpy: jest.SpyInstance;
+    let logMock: jest.SpyInstance;
+
+    beforeEach(() => {
+      findOneUserSpy = jest.spyOn(userService, 'findOneUser');
+      removeUserSpy = jest.spyOn(userService, 'removeUser');
+      logMock = jest.spyOn(Logger.prototype, 'log');
+    });
+
+    afterEach(() => {
+      findOneUserSpy.mockClear();
+      removeUserSpy.mockClear();
+    });
+
+    it('should return null if user not found', () => {
+      const id = null;
+
+      const user = userService.removeUser(id);
+
+      expect(removeUserSpy).toBeCalledWith(id);
+      expect(findOneUserSpy).toBeCalledWith({ id });
+      expect(user).toBeNull();
+
+      // Logging
+      expect(logMock).toHaveBeenLastCalledWith('No user found to delete.');
+    });
+
+    it('should return user if user found and deleted.', () => {
+      const id = '1';
+
+      const expectedUser: User = {
+        id: '1',
+        username: 'username-2',
+        password: 'pass2',
+        email: 'email2@gmail.com',
+        tasks: [],
+      };
+
+      const user = userService.removeUser(id);
+
+      expect(removeUserSpy).toBeCalledWith(id);
+      expect(findOneUserSpy).toBeCalledWith({ id });
+      expect(user).toEqual(expectedUser);
+
+      // Logging
+      expect(logMock).not.toHaveBeenLastCalledWith('No user found to delete.');
+      expect(logMock).toHaveBeenLastCalledWith('User deleted.', {
+        id,
+        username: expectedUser.username,
+      });
+    });
+  });
 });
