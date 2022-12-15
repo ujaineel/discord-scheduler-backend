@@ -6,6 +6,7 @@ import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { LoggerModule } from 'nestjs-pino';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -36,8 +37,6 @@ import { LoggerModule } from 'nestjs-pino';
           warnWhenNoEntities: false,
         },
         autoLoadEntities: true,
-        entities: ['./dist/**/entities/*'],
-        entitiesTs: ['./src/**/entities/*'],
         type: 'postgresql',
         dbName: configService.get('database.NAME'),
         host: configService.get('database.HOST'),
@@ -48,6 +47,7 @@ import { LoggerModule } from 'nestjs-pino';
         logger: (message: string) => console.info(message),
       }),
     }),
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
