@@ -1,4 +1,4 @@
-import DatabaseConfig from '../database.config';
+import DatabaseConfig from '../db/database.config';
 
 describe('Database Config', () => {
   describe('local environment db configs', () => {

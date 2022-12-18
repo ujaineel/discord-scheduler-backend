@@ -139,10 +139,10 @@ export class UsersService {
     }
 
     const index = users.findIndex((user) => user.id === userFound.id);
-    const newUser: User = { ...userFound, ...updateUserDto };
+    const newUser: User = { ...userFound, ...rest };
     users[index] = newUser;
     // TODO: Remove password from log tags.
-    this.logger.log('Updated user.', { ...updateUserDto });
+    this.logger.log('Updated user.', { ...rest });
 
     return users[index];
   }

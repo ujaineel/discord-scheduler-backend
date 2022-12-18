@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import appConfig from './config/app.config';
-import databaseConfig from './config/database.config';
+import databaseConfig from './config/db/database.config';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { LoggerModule } from 'nestjs-pino';
 import { UsersModule } from './users/users.module';
@@ -45,6 +45,10 @@ import { UsersModule } from './users/users.module';
         password: configService.get('database.PASSWORD'),
         debug: true,
         logger: (message: string) => console.info(message),
+        schemaGenerator: {
+          disableForeignKeys: true,
+          createForeignKeyConstraints: true,
+        },
       }),
     }),
     UsersModule,
