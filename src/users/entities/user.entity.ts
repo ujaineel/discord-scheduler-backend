@@ -48,7 +48,7 @@ export class User {
 
   // TODO: Change this to tasks collection.
   @Property({ nullable: true })
-  tasks?: string[];
+  tasks?: unknown[];
 
   constructor(username: string, email: string) {
     this.username = username;

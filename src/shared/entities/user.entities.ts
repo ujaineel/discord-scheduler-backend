@@ -16,5 +16,5 @@ export class UpdateUserDto {
   password?: string;
   email?: string;
   // To update in future.
-  tasks?: Array<unknown>;
+  tasks?: unknown[];
 }

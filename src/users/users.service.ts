@@ -5,41 +5,12 @@ import {
   Options,
   UpdateUserDto,
 } from '../shared/entities/user.entities';
-
-export class User {
-  id: string;
-  username: string;
-  password: string;
-  email: string;
-  tasks: unknown[];
-}
-
-const users: User[] = [
-  {
-    id: '0',
-    username: 'username-1',
-    password: 'pass1',
-    email: 'email@gmail.com',
-    tasks: [],
-  },
-  {
-    id: '1',
-    username: 'username-2',
-    password: 'pass2',
-    email: 'email2@gmail.com',
-    tasks: [],
-  },
-  {
-    id: '2',
-    username: 'username-3',
-    password: 'pass3',
-    email: 'email3@gmail.com',
-    tasks: [],
-  },
-];
+import { EntityRepository } from '@mikro-orm/core';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
+  constructor(private readonly userRepository: EntityRepository<User>) {}
   private readonly logger = new Logger(UsersService.name);
 
   findOneUser(options: Options): User | null {
@@ -50,12 +21,15 @@ export class UsersService {
     this.logger.log('Fetching user based on properties provided.', {
       ...options,
     });
-    const user = users.find(
-      (user) =>
-        user.id === options.id ||
-        user.username === options.username ||
-        user.email === options.email,
-    );
+
+    let user;
+    try {
+      user = this.userRepository.findOne({ ...options });
+    } catch (err) {
+      this.logger.error(err);
+      return null;
+    }
+
     if (user) {
       this.logger.log('User fetched', { ...user });
       return user;
@@ -68,6 +42,13 @@ export class UsersService {
   /* istanbul ignore next */
   findAllUsers() {
     this.logger.log('Fetching all users.');
+    let users;
+    try {
+      users = this.userRepository.findAll();
+    } catch (err) {
+      this.logger.error(err);
+      return null;
+    }
     if (!users) {
       this.logger.log('No user to fetch');
     }
@@ -108,13 +89,21 @@ export class UsersService {
       return { userCreated: false, ...sameValues };
     }
 
+    let newUser;
+    try {
+      this.userRepository.persistAndFlush({ ...createUserDto });
+      newUser = this.userRepository.findOne({ ...options });
+    } catch (err) {
+      this.logger.error(err);
+      return null;
+    }
+
     this.logger.log('User created', {
       email: createUserDto.email,
       username: createUserDto.username,
     });
-    users.push({ id: users.length.toString(), tasks: [], ...createUserDto });
 
-    return users[users.length - 1];
+    return newUser;
   }
 
   updateUser(updateUserDto: UpdateUserDto) {
@@ -138,13 +127,20 @@ export class UsersService {
       return null;
     }
 
-    const index = users.findIndex((user) => user.id === userFound.id);
-    const newUser: User = { ...userFound, ...rest };
-    users[index] = newUser;
+    let updatedUser;
+    try {
+      this.userRepository.nativeUpdate({ ...options }, { ...rest });
+      this.userRepository.flush();
+      updatedUser = this.userRepository.findOne({ ...options });
+    } catch (err) {
+      this.logger.error(err);
+      return null;
+    }
+
     // TODO: Remove password from log tags.
     this.logger.log('Updated user.', { ...rest });
 
-    return users[index];
+    return updatedUser;
   }
 
   removeUser(id: string) {
@@ -155,13 +151,15 @@ export class UsersService {
       return null;
     }
 
-    const userIndex = users.findIndex((user) => user.id === id);
+    try {
+      this.userRepository.removeAndFlush({ id });
+    } catch (err) {
+      this.logger.error(err);
+      return null;
+    }
 
-    const deletedUserArray = users.splice(userIndex, 1);
-    const deletedUser = deletedUserArray[0];
+    this.logger.log('User deleted.', { id, username: user.username });
 
-    this.logger.log('User deleted.', { id, username: deletedUser.username });
-
-    return deletedUser;
+    return user;
   }
 }
