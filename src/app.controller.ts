@@ -1,6 +1,6 @@
 import { Controller, Get, Logger } from '@nestjs/common';
 import { AppService } from './app.service';
-import { CreateUserDto, UpdateUserDto } from './shared/entities/user.entities';
+import { CreateUserDto, UpdateUserDto } from './shared/entities/user-entities';
 import { UsersService } from './users/users.service';
 
 @Controller()
@@ -28,7 +28,9 @@ export class AppController {
       email: 'user1@gmail.com',
     };
     const user = this.usersService.createUser(userData);
-
+    if (!user) {
+      this.logger.warn('User Not Created.');
+    }
     this.logger.log('Created User.', { ...user });
 
     /* this.logger.log('Update User');

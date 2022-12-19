@@ -4,16 +4,20 @@ import {
   CreateUserDto,
   Options,
   UpdateUserDto,
-} from '../shared/entities/user.entities';
+} from '../shared/entities/user-entities';
 import { EntityRepository } from '@mikro-orm/core';
 import { User } from './entities/user.entity';
+import { InjectRepository } from '@mikro-orm/nestjs';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly userRepository: EntityRepository<User>) {}
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: EntityRepository<User>,
+  ) {}
   private readonly logger = new Logger(UsersService.name);
 
-  findOneUser(options: Options): User | null {
+  async findOneUser(options: Options): Promise<User | null> {
     if (!Object.keys(options).length) {
       this.logger.log('No option provided for finding user.');
       return null;
@@ -24,7 +28,7 @@ export class UsersService {
 
     let user;
     try {
-      user = this.userRepository.findOne({ ...options });
+      user = await this.userRepository.findOne({ ...options });
     } catch (err) {
       this.logger.error(err);
       return null;
@@ -40,11 +44,11 @@ export class UsersService {
   }
 
   /* istanbul ignore next */
-  findAllUsers() {
+  async findAllUsers() {
     this.logger.log('Fetching all users.');
     let users;
     try {
-      users = this.userRepository.findAll();
+      users = await this.userRepository.findAll();
     } catch (err) {
       this.logger.error(err);
       return null;
@@ -55,7 +59,7 @@ export class UsersService {
     return users;
   }
 
-  createUser(createUserDto: CreateUserDto) {
+  async createUser(createUserDto: CreateUserDto) {
     // TODO: Create helper function to check if all values are there.
     if (isEmpty(createUserDto)) {
       this.logger.log('Information lacking to create User');
@@ -70,7 +74,7 @@ export class UsersService {
       ...options,
     });
 
-    const user = this.findOneUser(options);
+    const user = await this.findOneUser(options);
     let sameValues = {};
 
     // If an user with either same username or email exists.
@@ -91,22 +95,23 @@ export class UsersService {
 
     let newUser;
     try {
-      this.userRepository.persistAndFlush({ ...createUserDto });
-      newUser = this.userRepository.findOne({ ...options });
+      console.log({ ...createUserDto });
+      newUser = await this.userRepository.create({ ...createUserDto });
+      await this.userRepository.persistAndFlush(newUser);
     } catch (err) {
       this.logger.error(err);
       return null;
     }
 
     this.logger.log('User created', {
-      email: createUserDto.email,
-      username: createUserDto.username,
+      email: newUser.email,
+      username: newUser.username,
     });
 
     return newUser;
   }
 
-  updateUser(updateUserDto: UpdateUserDto) {
+  async updateUser(updateUserDto: UpdateUserDto) {
     const { id, ...rest } = updateUserDto;
     if (!updateUserDto.id || isEmpty(rest)) {
       this.logger.log('Cannot update user - id missing or user info empty', {
@@ -120,7 +125,7 @@ export class UsersService {
     };
 
     this.logger.log('Checking if a user with similar credentials exists');
-    const userFound = this.findOneUser(options);
+    const userFound = await this.findOneUser(options);
 
     if (!userFound) {
       this.logger.log('Could not find user.', { ...options });
@@ -129,9 +134,9 @@ export class UsersService {
 
     let updatedUser;
     try {
-      this.userRepository.nativeUpdate({ ...options }, { ...rest });
-      this.userRepository.flush();
-      updatedUser = this.userRepository.findOne({ ...options });
+      await this.userRepository.nativeUpdate({ ...options }, { ...rest });
+      await this.userRepository.flush();
+      updatedUser = await this.userRepository.findOne({ ...options });
     } catch (err) {
       this.logger.error(err);
       return null;
@@ -143,8 +148,8 @@ export class UsersService {
     return updatedUser;
   }
 
-  removeUser(id: string) {
-    const user = this.findOneUser({ id });
+  async removeUser(id: string) {
+    const user = await this.findOneUser({ id });
 
     if (!user) {
       this.logger.log('No user found to delete.');
@@ -152,7 +157,7 @@ export class UsersService {
     }
 
     try {
-      this.userRepository.removeAndFlush({ id });
+      await this.userRepository.removeAndFlush({ id });
     } catch (err) {
       this.logger.error(err);
       return null;

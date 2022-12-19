@@ -7,6 +7,7 @@ import databaseConfig from './config/db/database.config';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { LoggerModule } from 'nestjs-pino';
 import { UsersModule } from './users/users.module';
+import { TsMorphMetadataProvider } from '@mikro-orm/reflection';
 
 @Module({
   imports: [
@@ -35,7 +36,9 @@ import { UsersModule } from './users/users.module';
       useFactory: (configService: ConfigService) => ({
         discovery: {
           warnWhenNoEntities: false,
+          alwaysAnalyseProperties: true,
         },
+        metadataProvider: TsMorphMetadataProvider,
         autoLoadEntities: true,
         type: 'postgresql',
         dbName: configService.get('database.NAME'),

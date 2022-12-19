@@ -5,7 +5,7 @@ import {
   CreateUserDto,
   Options,
   UpdateUserDto,
-} from '../shared/entities/user.entities';
+} from '../shared/entities/user-entities';
 
 describe('UsersService', () => {
   let userService: UsersService;
