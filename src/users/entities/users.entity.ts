@@ -2,24 +2,23 @@ import {
   Entity,
   Property,
   PrimaryKey,
-  // Enum,
-  Unique,
+  Enum,
   BeforeCreate,
-  AfterCreate,
-  OnInit,
+  BeforeUpdate,
 } from '@mikro-orm/core';
 import { v4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
 
-/* enum CreationSource {
-  Local = 'local',
-  Discord = 'discord',
+enum CreationSource {
+  LOCAL = 'local',
+  DISCORD = 'discord',
 }
 
-export const enum UserStatus {
-  DISABLED,
-  ACTIVE,
-} */
+enum UserStatus {
+  DISABLED = 'disabled',
+  ACTIVE = 'active',
+  DELETED = 'deleted',
+}
 
 @Entity()
 export class User {
@@ -32,14 +31,14 @@ export class User {
   @Property({ unique: true })
   email!: string;
 
-  @Property({ hidden: true })
-  hashedPassword!: string;
+  @Property({ name: 'hash' })
+  password!: string;
 
-  /*   @Enum({ default: CreationSource.Local })
-  source?: CreationSource;
+  @Enum(() => CreationSource)
+  registerSource?: CreationSource = CreationSource.LOCAL;
 
-  @Enum({ default: UserStatus.ACTIVE })
-  status?: UserStatus; */
+  @Enum(() => UserStatus)
+  status?: UserStatus = UserStatus.ACTIVE;
 
   // TODO: Change this to tasks collection.
   @Property({ nullable: true })
@@ -54,18 +53,22 @@ export class User {
   constructor(username: string, password: string, email: string) {
     this.username = username;
     this.email = email;
-    this.hashedPassword = password;
+    this.password = password;
+    this.tasks = [];
   }
 
-  async convertPasswordHash(password: string): Promise<string> {
+  @BeforeCreate()
+  async convertPasswordHash() {
     let hash: string;
     try {
       const salt = await bcrypt.genSalt(11);
-      hash = await bcrypt.hash(password, salt);
+      console.log(salt);
+      hash = await bcrypt.hash(this.password, salt);
+      console.log(hash);
     } catch (err) {
       throw err;
     }
 
-    return hash;
+    this.password = hash;
   }
 }

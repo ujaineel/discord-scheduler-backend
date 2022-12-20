@@ -6,7 +6,7 @@ import {
   UpdateUserDto,
 } from '../shared/entities/user-entities';
 import { EntityRepository } from '@mikro-orm/core';
-import { User } from './entities/user.entity';
+import { User } from './entities/users.entity';
 import { InjectRepository } from '@mikro-orm/nestjs';
 
 @Injectable()
@@ -26,7 +26,7 @@ export class UsersService {
       ...options,
     });
 
-    let user;
+    let user: User | null;
     try {
       user = await this.userRepository.findOne({ ...options });
     } catch (err) {
@@ -95,7 +95,6 @@ export class UsersService {
 
     let newUser;
     try {
-      console.log({ ...createUserDto });
       newUser = await this.userRepository.create({ ...createUserDto });
       await this.userRepository.persistAndFlush(newUser);
     } catch (err) {
@@ -157,7 +156,7 @@ export class UsersService {
     }
 
     try {
-      await this.userRepository.removeAndFlush({ id });
+      await this.userRepository.removeAndFlush(user);
     } catch (err) {
       this.logger.error(err);
       return null;

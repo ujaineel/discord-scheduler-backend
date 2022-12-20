@@ -22,17 +22,14 @@ import { TsMorphMetadataProvider } from '@mikro-orm/reflection';
     port: parseInt(process.env.DB_PORT, 10),
     user: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
-    schemaGenerator: {
-      disableForeignKeys: false,
-    },
     migrations: {
       disableForeignKeys: false,
     },
-    schema: 'User',
   });
-  const generator = orm.getSchemaGenerator();
+  const connection = orm.em.getDriver().getConnection();
 
-  const log = await generator.getUpdateSchemaSQL({
+  const generator = orm.getSchemaGenerator();
+  const log = await generator.createSchema({
     wrap: true,
   });
   console.log(log);
