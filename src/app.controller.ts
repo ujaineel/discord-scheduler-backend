@@ -23,9 +23,9 @@ export class AppController {
     this.logger.log('Create User');
 
     const userData: CreateUserDto = {
-      username: 'user2',
-      password: 'pass2',
-      email: 'user2@gmail.com',
+      username: 'user1',
+      password: 'pass1',
+      email: 'user1@gmail.com',
     };
     const user = this.usersService.createUser(userData);
     if (!user) {
@@ -36,7 +36,7 @@ export class AppController {
     this.logger.log('Update User');
 
     const updateUserDto: UpdateUserDto = {
-      id: '0f00f8b7-e327-405b-bb76-266a9738e4b4',
+      id: '378bf4c3-ddd2-4192-9957-0be04daaf442',
       username: 'updatedUser3',
       email: 'updatedUser3@email.com',
     };

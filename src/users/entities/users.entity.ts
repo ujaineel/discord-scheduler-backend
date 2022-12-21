@@ -35,10 +35,10 @@ export class User {
   password!: string;
 
   @Enum(() => CreationSource)
-  registerSource?: CreationSource = CreationSource.LOCAL;
+  registerSource: CreationSource;
 
   @Enum(() => UserStatus)
-  status?: UserStatus = UserStatus.ACTIVE;
+  status: UserStatus;
 
   // TODO: Change this to tasks collection.
   @Property({ nullable: true })
@@ -50,10 +50,18 @@ export class User {
   @Property()
   createdAt: Date = new Date();
 
-  constructor(username: string, password: string, email: string) {
+  constructor(
+    username: string,
+    password: string,
+    email: string,
+    registerSource?: CreationSource,
+    status?: UserStatus,
+  ) {
     this.username = username;
     this.email = email;
     this.password = password;
+    this.registerSource = registerSource || CreationSource.LOCAL;
+    this.status = status || UserStatus.ACTIVE;
     this.tasks = [];
   }
 
@@ -62,9 +70,7 @@ export class User {
     let hash: string;
     try {
       const salt = await bcrypt.genSalt(11);
-      console.log(salt);
       hash = await bcrypt.hash(this.password, salt);
-      console.log(hash);
     } catch (err) {
       throw err;
     }

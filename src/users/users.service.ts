@@ -30,7 +30,7 @@ export class UsersService {
     try {
       user = await this.userRepository.findOne({ ...options });
     } catch (err) {
-      this.logger.error(err);
+      this.logger.error({ error: err }, 'Error while searching for User.');
       return null;
     }
 
