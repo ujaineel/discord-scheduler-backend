@@ -12,6 +12,7 @@ import * as bcrypt from 'bcrypt';
 export enum CreationSource {
   LOCAL = 'local',
   DISCORD = 'discord',
+  GOOGLE = 'google',
 }
 
 export enum UserStatus {

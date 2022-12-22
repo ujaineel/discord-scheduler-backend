@@ -10,6 +10,10 @@ import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { CreationSource, User, UserStatus } from './entities/users.entity';
 import { EntityRepository } from '@mikro-orm/core/entity';
 
+const findOneMockImplementation = async (options: Options) => {
+  
+};
+
 describe('UsersService', () => {
   let userService: UsersService;
   let userRepositoryMock: EntityRepository<User>;
@@ -19,7 +23,7 @@ describe('UsersService', () => {
         {
           provide: getRepositoryToken(User),
           useFactory: jest.fn(() => ({
-            findOne: jest.fn(),
+            findOne: jest.fn((options) => console.log(args)),
             create: jest.fn(),
             persistAndFlush: jest.fn(),
             nativeUpdate: jest.fn(),
@@ -48,9 +52,10 @@ describe('UsersService', () => {
     let logMock: jest.SpyInstance;
     let findOneMock: jest.SpyInstance;
     let findOneUserSpy: jest.SpyInstance;
+
     beforeEach(() => {
-      findOneMock = jest.spyOn(userRepositoryMock, 'findOne');
       logMock = jest.spyOn(Logger.prototype, 'log');
+      findOneMock = jest.spyOn(userRepositoryMock, 'findOne');
     });
 
     afterEach(() => {
@@ -58,7 +63,7 @@ describe('UsersService', () => {
     });
 
     it('should call findOneUser with expected param and return user ', () => {
-      const user1 = {
+      /* const user1 = {
         id: '1',
         username: 'username-2',
         email: 'email2@gmail.com',
@@ -77,18 +82,23 @@ describe('UsersService', () => {
       expect(userRepositoryMock.findOne).toHaveBeenCalledWith(options);
 
       // Logging
-      /*expect(logMock).toBeCalledWith(
+      expect(logMock).toBeCalledWith(
         'Fetching user based on properties provided.',
         { ...options },
       );
-      expect(logMock).toBeCalledWith('User fetched', {
-        ...user1,
-      });
+
 
       expect(logMock).toHaveBeenCalledTimes(2);
-      */
-      // Expected Output
-      expect(foundUser).toEqual(user1);
+      // Expected Output */
+      const options = {
+        id: '1',
+        username: 'username-2',
+      };
+
+      userService.findOneUser(options);
+
+      expect(findOneMock).toHaveBeenCalledWith(options);
+      expect(findOneMock).toBeCalledTimes(1);
     });
 
     it.skip('should return null if no search option provided', () => {
