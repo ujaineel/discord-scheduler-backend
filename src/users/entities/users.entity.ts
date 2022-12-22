@@ -9,12 +9,12 @@ import {
 import { v4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
 
-enum CreationSource {
+export enum CreationSource {
   LOCAL = 'local',
   DISCORD = 'discord',
 }
 
-enum UserStatus {
+export enum UserStatus {
   DISABLED = 'disabled',
   ACTIVE = 'active',
   DELETED = 'deleted',

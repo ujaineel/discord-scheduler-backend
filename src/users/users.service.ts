@@ -43,22 +43,6 @@ export class UsersService {
     return null;
   }
 
-  /* istanbul ignore next */
-  async findAllUsers() {
-    this.logger.log('Fetching all users.');
-    let users;
-    try {
-      users = await this.userRepository.findAll();
-    } catch (err) {
-      this.logger.error(err);
-      return null;
-    }
-    if (!users) {
-      this.logger.log('No user to fetch');
-    }
-    return users;
-  }
-
   async createUser(createUserDto: CreateUserDto) {
     // TODO: Create helper function to check if all values are there.
     if (isEmpty(createUserDto)) {
