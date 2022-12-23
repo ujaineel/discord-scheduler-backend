@@ -1,18 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { CreationSource, UserStatus } from '../../users/entities/users.entity';
 import { v4 } from 'uuid';
-
-class User {
-  _id: string;
-  username: string;
-  email: string;
-  password: string;
-  registerSource: CreationSource;
-  status: UserStatus;
-  tasks: unknown[];
-  updatedAt: Date;
-  createdAt: Date;
-}
+import { UserFixture as User } from 'test/fixtures/user.fixtures';
 
 // To change when tasks entity is created.
 const createRandomTasks = (): unknown[] => {
@@ -29,7 +18,7 @@ const createRandomTasks = (): unknown[] => {
 
 export const createRandomUser = (): User => {
   return {
-    _id: faker.datatype.uuid(),
+    id: faker.datatype.uuid(),
     username: faker.internet.userName(),
     email: faker.internet.email().toLowerCase(),
     password: faker.internet.password(),

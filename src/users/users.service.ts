@@ -58,7 +58,14 @@ export class UsersService {
       ...options,
     });
 
-    const user = await this.findOneUser(options);
+    let user;
+    try {
+      user = await this.findOneUser(options);
+    } catch (err) {
+      this.logger.error('Error with findOneUser');
+      throw err;
+    }
+
     let sameValues = {};
 
     // If an user with either same username or email exists.

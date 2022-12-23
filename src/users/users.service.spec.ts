@@ -9,9 +9,20 @@ import {
 import { getRepositoryToken } from '@mikro-orm/nestjs';
 import { CreationSource, User, UserStatus } from './entities/users.entity';
 import { EntityRepository } from '@mikro-orm/core/entity';
+import { sampleUser } from '../../test/fixtures/user.fixtures';
 
-const findOneMockImplementation = async (options: Options) => {
-  
+const findOneMockImplementation = (options: Options) => {
+  const userFixture = sampleUser({});
+  if (
+    // id = '1', email: 'user1@email.com', username: 'username-1'
+    options.id === userFixture.id ||
+    options.email === userFixture.email ||
+    options.username === userFixture.username
+  ) {
+    return sampleUser({});
+  } else {
+    return null;
+  }
 };
 
 describe('UsersService', () => {
@@ -23,8 +34,10 @@ describe('UsersService', () => {
         {
           provide: getRepositoryToken(User),
           useFactory: jest.fn(() => ({
-            findOne: jest.fn((options) => console.log(args)),
-            create: jest.fn(),
+            findOne: jest.fn((options) => findOneMockImplementation(options)),
+            create: jest.fn((createUserDto) => {
+              return sampleUser(createUserDto);
+            }),
             persistAndFlush: jest.fn(),
             nativeUpdate: jest.fn(),
             flush: jest.fn(),
@@ -51,7 +64,6 @@ describe('UsersService', () => {
   describe('findOneUser', () => {
     let logMock: jest.SpyInstance;
     let findOneMock: jest.SpyInstance;
-    let findOneUserSpy: jest.SpyInstance;
 
     beforeEach(() => {
       logMock = jest.spyOn(Logger.prototype, 'log');
@@ -62,70 +74,56 @@ describe('UsersService', () => {
       findOneMock.mockClear();
     });
 
-    it('should call findOneUser with expected param and return user ', () => {
-      /* const user1 = {
-        id: '1',
-        username: 'username-2',
-        email: 'email2@gmail.com',
-        password: 'pass2',
-        registerSource: CreationSource.LOCAL,
-        status: UserStatus.ACTIVE,
-        tasks: [],
-        updatedAt: new Date(2022, 12, 21, 12, 12, 12, 12),
-        createdAt: new Date(2022, 12, 21, 12, 12, 12, 12),
-      };
+    it('should call findOneUser with expected param and return user ', async () => {
+      const user = sampleUser({});
 
-      const options: Options = { id: '1', username: 'username-2' };
-      const foundUser = userService.findOneUser(options);
+      const findOptions: Options = { id: '1', username: 'username-1' };
+      const foundUser = await userService.findOneUser(findOptions);
 
       // Function Called (which is obvious but s till added)
-      expect(userRepositoryMock.findOne).toHaveBeenCalledWith(options);
+      expect(findOneMock).toHaveBeenCalledWith(findOptions);
+      expect(findOneMock).toBeCalledTimes(1);
 
       // Logging
-      expect(logMock).toBeCalledWith(
+      expect(logMock).toHaveBeenCalledWith(
         'Fetching user based on properties provided.',
-        { ...options },
+        { ...findOptions },
       );
 
+      expect(logMock).toHaveBeenCalledWith('User fetched', { ...user });
 
       expect(logMock).toHaveBeenCalledTimes(2);
+
       // Expected Output */
-      const options = {
-        id: '1',
-        username: 'username-2',
-      };
-
-      userService.findOneUser(options);
-
-      expect(findOneMock).toHaveBeenCalledWith(options);
-      expect(findOneMock).toBeCalledTimes(1);
+      expect(foundUser).toEqual(user);
     });
 
-    it.skip('should return null if no search option provided', () => {
+    it('should return null if no search option provided', async () => {
       const options = new Options();
-      const userFound = userService.findOneUser(options);
+      const userFound = await userService.findOneUser(options);
 
       // Again, Obvious
-      expect(findOneUserSpy).toHaveBeenCalledWith(options);
+      expect(findOneMock).not.toBeCalled();
 
       // Logging
       expect(logMock).toHaveBeenCalledWith(
         'No option provided for finding user.',
       );
 
-      // TODO: Fix Log received, - "RootTestModule dependencies initialized".
-      // TODO: Fix test time. One test file taks almost 8 seconds.
+      expect(logMock).toHaveBeenLastCalledWith(
+        'No option provided for finding user.',
+      );
 
       // Expected Output
       expect(userFound).toBeNull();
     });
 
-    it.skip("should return null if user isn't found", () => {
+    it("should return null if user isn't found", async () => {
       const options: Options = { id: '5' };
-      const userFound = userService.findOneUser(options);
+      const userFound = await userService.findOneUser(options);
 
       // Again, Obvious
-      expect(findOneUserSpy).toHaveBeenCalledWith(options);
+      expect(findOneMock).toHaveBeenCalledWith(options);
 
       // Logging
       expect(logMock).toHaveBeenCalledWith(
@@ -133,55 +131,70 @@ describe('UsersService', () => {
         { ...options },
       );
 
-      expect(logMock).toHaveBeenCalledWith('Did not find user');
+      expect(logMock).toHaveBeenLastCalledWith('Did not find user');
 
       // Expected Output
       expect(userFound).toBeNull();
     });
   });
 
-  describe.skip('createUser', () => {
-    let findOneUserSpy: jest.SpyInstance;
-    let createUserSpy: jest.SpyInstance;
+  describe('createUser', () => {
+    let findOneMock: jest.SpyInstance;
+    let createMock: jest.SpyInstance;
+    let persistAndFlushMock: jest.SpyInstance;
+    let createUserMock: jest.SpyInstance;
     let logMock: jest.SpyInstance;
 
     beforeEach(() => {
-      findOneUserSpy = jest.spyOn(userService, 'findOneUser');
-      createUserSpy = jest.spyOn(userService, 'createUser');
+      findOneMock = jest.spyOn(userRepositoryMock, 'findOne');
+      createMock = jest.spyOn(userRepositoryMock, 'create');
+      persistAndFlushMock = jest.spyOn(userRepositoryMock, 'persistAndFlush');
+      createUserMock = jest.spyOn(userService, 'createUser');
       logMock = jest.spyOn(Logger.prototype, 'log');
     });
 
     afterEach(() => {
-      findOneUserSpy.mockClear();
-      createUserSpy.mockClear();
+      findOneMock.mockClear();
+      createMock.mockClear();
+      persistAndFlushMock.mockClear();
+      createUserMock.mockClear();
     });
 
-    it('should return null if createUserDto is empty', () => {
+    it('should return null if createUserDto is empty', async () => {
       const emptyCreateUserDto = new CreateUserDto();
-      const user = userService.createUser(emptyCreateUserDto);
+      const user = await userService.createUser(emptyCreateUserDto);
 
-      expect(createUserSpy).toBeCalledWith(emptyCreateUserDto);
-      expect(findOneUserSpy).not.toBeCalled();
+      expect(createUserMock).toBeCalledWith(emptyCreateUserDto);
+
+      // Function ends before DB calls are triggerred.
+      expect(findOneMock).not.toBeCalled();
+      expect(createMock).not.toBeCalled();
+      expect(persistAndFlushMock).not.toBeCalled();
+
       expect(logMock).lastCalledWith('Information lacking to create User');
       expect(user).toBeNull();
     });
 
-    it('should return null if one of the properties is not provided', () => {
+    it('should return null if one of the properties is not provided', async () => {
       const partialCreateUserDto: CreateUserDto = {
         username: 'something',
         password: 'somethingpass',
         email: '',
       };
 
-      const user = userService.createUser(partialCreateUserDto);
+      const user = await userService.createUser(partialCreateUserDto);
 
-      expect(createUserSpy).toBeCalledWith(partialCreateUserDto);
-      expect(findOneUserSpy).not.toBeCalled();
+      expect(createUserMock).toBeCalledWith(partialCreateUserDto);
+
+      expect(findOneMock).not.toBeCalled();
+      expect(createMock).not.toBeCalled();
+      expect(persistAndFlushMock).not.toBeCalled();
+
       expect(logMock).lastCalledWith('Information lacking to create User');
       expect(user).toBeNull();
     });
 
-    it('should return new user if user not found', () => {
+    it('should return new user if user not found', async () => {
       const createUserDto: CreateUserDto = {
         username: 'something',
         password: 'somethingpass',
@@ -193,10 +206,13 @@ describe('UsersService', () => {
         email: createUserDto.email,
       };
 
-      const user = userService.createUser(createUserDto);
+      const user = await userService.createUser(createUserDto);
 
-      expect(createUserSpy).toBeCalledWith(createUserDto);
-      expect(findOneUserSpy).toBeCalledWith(options);
+      expect(createUserMock).toBeCalledWith(createUserDto);
+
+      expect(findOneMock).toBeCalledWith(options);
+      expect(createMock).toBeCalledWith(createUserDto);
+      expect(persistAndFlushMock).toBeCalled();
 
       // Logging
       expect(logMock).toHaveBeenCalledWith(
@@ -209,19 +225,13 @@ describe('UsersService', () => {
         username: createUserDto.username,
       });
 
-      expect(user).toEqual({
-        id: '3',
-        username: 'something',
-        password: 'somethingpass',
-        email: 'something@zsomething.com',
-        tasks: [],
-      });
+      expect(user).toEqual(sampleUser(createUserDto));
     });
 
-    it('should not return new user if user is found', () => {
+    it('should not return new user if username is found', async () => {
       const createUserDto: CreateUserDto = {
-        username: 'something',
-        password: 'somethingpass',
+        username: 'username-1',
+        password: 'dsfsdfsdf',
         email: 'something@zsomething.com',
       };
 
@@ -231,15 +241,16 @@ describe('UsersService', () => {
       };
 
       const sameValues = {
-        email: true,
         username: true,
         userCreated: false,
       };
 
-      const user = userService.createUser(createUserDto);
+      const user = await userService.createUser(createUserDto);
 
-      expect(createUserSpy).toBeCalledWith(createUserDto);
-      expect(findOneUserSpy).toBeCalledWith(options);
+      expect(createUserMock).toBeCalledWith(createUserDto);
+      expect(findOneMock).toBeCalledWith(options);
+      expect(createMock).not.toBeCalled();
+      expect(persistAndFlushMock).not.toBeCalled();
 
       // Logging
       expect(logMock).toHaveBeenCalledWith(
@@ -251,7 +262,7 @@ describe('UsersService', () => {
         'User with same credentials exists.',
       );
 
-      expect(logMock).toHaveBeenCalledWith(
+      expect(logMock).not.toHaveBeenCalledWith(
         'User is already registered with this email',
       );
 
@@ -260,11 +271,11 @@ describe('UsersService', () => {
       expect(user).toEqual(sameValues);
     });
 
-    it('should return values that match if a user is found with email but username not found', () => {
+    it('should not return new user if email is found', async () => {
       const createUserDto: CreateUserDto = {
-        username: 'username-231',
-        password: 'pass1234',
-        email: 'email@gmail.com',
+        username: 'username',
+        password: 'dsfsdfsdf',
+        email: 'username1@email.com',
       };
 
       const options: Options = {
@@ -273,16 +284,24 @@ describe('UsersService', () => {
       };
 
       const sameValues = {
-        userCreated: false,
         email: true,
+        userCreated: false,
       };
 
-      const user = userService.createUser(createUserDto);
+      const user = await userService.createUser(createUserDto);
 
-      expect(createUserSpy).toBeCalledWith(createUserDto);
-      expect(findOneUserSpy).toBeCalledWith(options);
+      expect(createUserMock).toBeCalledWith(createUserDto);
+      expect(findOneMock).toBeCalledWith(options);
+
+      expect(createMock).not.toBeCalled();
+      expect(persistAndFlushMock).not.toBeCalled();
 
       // Logging
+      expect(logMock).toHaveBeenCalledWith(
+        'Checking if a user with similar credentials exists',
+        { ...options },
+      );
+
       expect(logMock).toHaveBeenCalledWith(
         'User with same credentials exists.',
       );
@@ -298,11 +317,11 @@ describe('UsersService', () => {
       expect(user).toEqual(sameValues);
     });
 
-    it('should return all matching properties if user with same email and username is found', () => {
+    it('should return all matching properties if email and username is found', async () => {
       const createUserDto: CreateUserDto = {
         username: 'username-1',
         password: 'pass1234',
-        email: 'email@gmail.com',
+        email: 'username1@email.com',
       };
 
       const options: Options = {
@@ -316,12 +335,20 @@ describe('UsersService', () => {
         email: true,
       };
 
-      const user = userService.createUser(createUserDto);
+      const user = await userService.createUser(createUserDto);
 
-      expect(createUserSpy).toBeCalledWith(createUserDto);
-      expect(findOneUserSpy).toBeCalledWith(options);
+      expect(createUserMock).toBeCalledWith(createUserDto);
+      expect(findOneMock).toBeCalledWith(options);
+
+      expect(createMock).not.toBeCalled();
+      expect(persistAndFlushMock).not.toBeCalled();
 
       // Logging
+      expect(logMock).toHaveBeenCalledWith(
+        'Checking if a user with similar credentials exists',
+        { ...options },
+      );
+
       expect(logMock).toHaveBeenCalledWith(
         'User with same credentials exists.',
       );
@@ -334,34 +361,65 @@ describe('UsersService', () => {
 
       expect(user).toEqual(sameValues);
     });
+
+    it('should throw an error if findOneUser throws an error', async () => {
+      const createUserDto: CreateUserDto = {
+        username: 'username-1',
+        password: 'pass1234',
+        email: 'username1@email.com',
+      };
+
+      const findOneUserMock = jest
+        .spyOn(userService, 'findOneUser')
+        .mockImplementation((options) => {
+          throw new Error('Something wrong with findOneUser');
+        });
+
+      try {
+        await userService.createUser(createUserDto);
+      } catch (err) {
+        expect(err).toMatchObject({
+          message: 'Something wrong with findOneUser',
+        });
+      }
+
+      findOneUserMock.mockClear();
+    });
   });
 
-  describe.skip('updateUser', () => {
-    let findOneUserSpy: jest.SpyInstance;
+  describe('updateUser', () => {
+    let findOneMock: jest.SpyInstance;
+    let nativeUpdateSpy: jest.SpyInstance;
+    let flushSpy: jest.SpyInstance;
     let updateUserSpy: jest.SpyInstance;
     let logMock: jest.SpyInstance;
 
     beforeEach(() => {
-      findOneUserSpy = jest.spyOn(userService, 'updateUser');
+      findOneMock = jest.spyOn(userRepositoryMock, 'findOne');
+      nativeUpdateSpy = jest.spyOn(userRepositoryMock, 'nativeUpdate');
+      flushSpy = jest.spyOn(userRepositoryMock, 'flush');
       updateUserSpy = jest.spyOn(userService, 'updateUser');
       logMock = jest.spyOn(Logger.prototype, 'log');
     });
 
     afterEach(() => {
-      findOneUserSpy.mockClear();
+      findOneMock.mockClear();
+      nativeUpdateSpy.mockClear();
+      flushSpy.mockClear();
       updateUserSpy.mockClear();
     });
 
-    it('should return null if updateUserDto does not have id', () => {
+    it('should return null if updateUserDto does not have id', async () => {
       const updateUserDto: UpdateUserDto = {
         id: null,
         username: 'fsdfsp32',
         email: 'fsdfs',
       };
 
-      const updatedUser = userService.updateUser(updateUserDto);
+      const updatedUser = await userService.updateUser(updateUserDto);
 
       expect(updateUserSpy).toHaveBeenCalledWith(updateUserDto);
+
       expect(logMock).lastCalledWith(
         'Cannot update user - id missing or user info empty',
         {
@@ -369,15 +427,18 @@ describe('UsersService', () => {
         },
       );
 
+      expect(nativeUpdateSpy).not.toBeCalled();
+      expect(flushSpy).not.toBeCalled();
+
       expect(updatedUser).toBeNull();
     });
 
-    it('should return null if id is present but other properties are not found', () => {
+    it('should return null if id is present but other properties are not found', async () => {
       const updateUserDto: UpdateUserDto = {
         id: '1',
       };
 
-      const updatedUser = userService.updateUser(updateUserDto);
+      const updatedUser = await userService.updateUser(updateUserDto);
 
       expect(updateUserSpy).toHaveBeenCalledWith(updateUserDto);
       expect(logMock).lastCalledWith(
@@ -387,21 +448,26 @@ describe('UsersService', () => {
         },
       );
 
+      expect(nativeUpdateSpy).not.toBeCalled();
+      expect(flushSpy).not.toBeCalled();
+
       expect(updatedUser).toBeNull();
     });
 
-    // TODO: Fix this test.
-    it('should return null if user is not found', () => {
+    it('should return null if user is not found', async () => {
       const updateUserDto: UpdateUserDto = {
         id: '4321',
         username: 'changeditup',
         password: 'chanedpass',
       };
 
-      const updatedUser = userService.updateUser(updateUserDto);
+      const updatedUser = await userService.updateUser(updateUserDto);
 
       expect(updateUserSpy).toBeCalledWith(updateUserDto);
-      expect(findOneUserSpy).toBeCalled();
+      expect(findOneMock).toBeCalled();
+
+      expect(nativeUpdateSpy).not.toBeCalled();
+      expect(flushSpy).not.toBeCalled();
 
       // Logging
       expect(logMock).not.toBeCalledWith(
@@ -423,25 +489,27 @@ describe('UsersService', () => {
     });
 
     // TODO: Fix this test.
-    it('should update user if found', () => {
+    it('should update user if found', async () => {
       const updateUserDto: UpdateUserDto = {
-        id: '2',
+        id: '1',
         username: 'changeditup',
         password: 'chanedpass',
       };
 
-      const expectedUpdatedUser = {
-        id: '2',
-        username: 'changeditup',
-        password: 'chanedpass',
-        email: 'email3@gmail.com',
-        tasks: [],
+      const { id, ...rest } = updateUserDto;
+
+      const options: Options = {
+        id: id,
       };
 
-      const updatedUser = userService.updateUser(updateUserDto);
+      const updatedUser = await userService.updateUser(updateUserDto);
 
       expect(updateUserSpy).toBeCalledWith(updateUserDto);
-      expect(findOneUserSpy).toBeCalled();
+      expect(findOneMock).toBeCalledWith(options);
+      expect(findOneMock).toBeCalledTimes(2);
+
+      expect(nativeUpdateSpy).toBeCalled();
+      expect(flushSpy).toBeCalled();
 
       // Logging
       expect(logMock).not.toBeCalledWith(
@@ -460,57 +528,65 @@ describe('UsersService', () => {
       });
 
       expect(logMock).toBeCalledWith('Updated user.', {
-        ...updateUserDto,
+        ...rest,
       });
-
-      expect(updatedUser).toEqual(expectedUpdatedUser);
     });
   });
 
-  describe.skip('removeUser', () => {
+  describe('removeUser', () => {
     let findOneUserSpy: jest.SpyInstance;
+    let removeFlushSpy: jest.SpyInstance;
     let removeUserSpy: jest.SpyInstance;
     let logMock: jest.SpyInstance;
 
     beforeEach(() => {
       findOneUserSpy = jest.spyOn(userService, 'findOneUser');
+      removeFlushSpy = jest.spyOn(userRepositoryMock, 'removeAndFlush');
       removeUserSpy = jest.spyOn(userService, 'removeUser');
       logMock = jest.spyOn(Logger.prototype, 'log');
     });
 
     afterEach(() => {
       findOneUserSpy.mockClear();
+      removeFlushSpy.mockClear();
       removeUserSpy.mockClear();
     });
 
-    it('should return null if user not found', () => {
+    it('should return null if user not found', async () => {
       const id = null;
 
-      const user = userService.removeUser(id);
+      const user = await userService.removeUser(id);
 
       expect(removeUserSpy).toBeCalledWith(id);
       expect(findOneUserSpy).toBeCalledWith({ id });
-      expect(user).toBeNull();
-
+      expect(removeFlushSpy).not.toBeCalled();
       // Logging
       expect(logMock).toHaveBeenLastCalledWith('No user found to delete.');
+
+      expect(user).toBeNull();
     });
 
-    it('should return user if user found and deleted.', () => {
+    it('should return user if user found and deleted.', async () => {
       const id = '1';
 
       const expectedUser = {
         id: '1',
-        username: 'username-2',
-        password: 'pass2',
-        email: 'email2@gmail.com',
-        tasks: [],
+        username: 'username-1',
+        email: 'username1@email.com',
+        password: 'pass1',
+        registerSource: CreationSource.LOCAL,
+        status: UserStatus.ACTIVE,
+        tasks: ['task1', 'task2'],
+        updatedAt: new Date('2022-06-08T00:00:00.000Z'),
+        createdAt: new Date('2022-06-02T00:00:00.000Z'),
       };
 
-      const user = userService.removeUser(id);
+      const user = await userService.removeUser(id);
 
       expect(removeUserSpy).toBeCalledWith(id);
       expect(findOneUserSpy).toBeCalledWith({ id });
+      expect(removeFlushSpy).toBeCalledWith(expectedUser);
+
       expect(user).toEqual(expectedUser);
 
       // Logging
