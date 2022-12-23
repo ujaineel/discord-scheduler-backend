@@ -371,7 +371,7 @@ describe('UsersService', () => {
 
       const findOneUserMock = jest
         .spyOn(userService, 'findOneUser')
-        .mockImplementation((options) => {
+        .mockImplementation(() => {
           throw new Error('Something wrong with findOneUser');
         });
 
@@ -502,7 +502,7 @@ describe('UsersService', () => {
         id: id,
       };
 
-      const updatedUser = await userService.updateUser(updateUserDto);
+      await userService.updateUser(updateUserDto);
 
       expect(updateUserSpy).toBeCalledWith(updateUserDto);
       expect(findOneMock).toBeCalledWith(options);

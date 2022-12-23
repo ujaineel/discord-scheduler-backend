@@ -26,7 +26,6 @@ import { TsMorphMetadataProvider } from '@mikro-orm/reflection';
       disableForeignKeys: false,
     },
   });
-  const connection = orm.em.getDriver().getConnection();
 
   const generator = orm.getSchemaGenerator();
   const log = await generator.createSchema({
