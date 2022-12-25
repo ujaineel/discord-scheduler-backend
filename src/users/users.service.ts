@@ -62,8 +62,8 @@ export class UsersService {
     try {
       user = await this.findOneUser(options);
     } catch (err) {
-      this.logger.error('Error with findOneUser');
-      throw err;
+      this.logger.error(err.message, err.stack);
+      throw new Error(err.message);
     }
 
     let sameValues = {};
@@ -90,7 +90,7 @@ export class UsersService {
       await this.userRepository.persistAndFlush(newUser);
     } catch (err) {
       this.logger.error(err);
-      return null;
+      throw err;
     }
 
     this.logger.log('User created', {
